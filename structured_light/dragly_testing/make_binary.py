@@ -27,11 +27,10 @@ def show_image(img):
 print(os.listdir(img_folder))
 
 img_list = load_images_from_folder(img_folder)
-avg_img = np.ndarray((1080, 1920))
+avg_img = np.zeros((1080, 1920))
 N = 0
 
 for img in img_list:
-    print("hei")
     N += 1
     avg_img += img
 
@@ -39,8 +38,20 @@ avg_img /= N
 avg_img = np.around(avg_img)
 
 
-show_image(avg_img)
+x_value_image = np.zeros((1080, 1920))
+print("x val image")
+print(x_value_image)
+xxx =  np.ndarray((1080, 1920))
+img_list.reverse()
+x_factor = 1
 
 for img in img_list:
-    bin_img = (img > avg_img)*255
+    bin_img = (img > avg_img)*1.0
     show_image(bin_img)
+    x_value_image += bin_img * x_factor
+    x_factor *= 2
+    show_image(x_value_image)
+
+
+
+
