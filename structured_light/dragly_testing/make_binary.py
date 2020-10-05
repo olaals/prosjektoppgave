@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-img_folder = "images"
-output_dir = "bin_images"
-show_images = False
 
 def load_images_from_folder(folder):
     images = []
@@ -21,38 +18,84 @@ def load_images_from_folder(folder):
 
 
 def show_image(img):
-    if show_images:
-        plt.imshow(img, cmap="gray")
-        plt.show()
+    plt.imshow(img, cmap="gray")
+    plt.show()
+
+def show_image_list(img_list):
+    for img in img_list:
+        show_image(img)
+
+def get_average_img(img_list, shape):
+    avg_img = np.zeros(shape)
+    N = 0
+    for img in img_list:
+        N += 1
+        avg_img += img
+
+    avg_img /= N
+    avg_img = np.around(avg_img)
+    return avg_img
+
+def make_binary_images(img_list, avg_img):
+    bin_img_list = []
+    for img in img_list:
+        bin_img = (img > avg_img)*1.0
+        bin_img_list.append(bin_img)
+    return bin_img_list
+
+def binary_images_to_projector_x_val_img(bin_img_list, shape):
+    x_value_image = np.zeros(shape)
+    bin_img_list.reverse()
+    x_factor = 1
+    for bin_img in bin_img_list:
+        x_value_image += bin_img * x_factor
+        x_factor *= 2
+    return x_value_image
+
+def save_image(img, folder, filename, filetype):
+    cv2.imwrite(os.path.join(folder, filename) + filetype, img)
+
+def save_image_list(img_list, folder, filename, filetype):
+    subscript = 0
+    for img in img_list:
+        img *= 255
+        save_path = os.path.join(folder, filename) + "_" + str(subscript) + filetype
+        print("savepathkjo")
+        print(save_path)
+        cv2.imwrite(save_path, img)
+        subscript += 1
 
 
-print(os.listdir(img_folder))
 
-img_list = load_images_from_folder(img_folder)
-avg_img = np.zeros((1080, 1920))
-N = 0
+if __name__ == '__main__':
 
-for img in img_list:
-    N += 1
-    avg_img += img
+    STRUCTURED_LIGHT_INPUT_DIR = "images"
+    X_VAL_IMG_DIR = "projector_x_images"
+    X_VAL_PNG = "x_val_img"
+    BINARY_IMG_DIR = "bin_images"
+    BINARY_IMG_PNG = "binary_image" 
+    FILETYPE_PNG = ".png"
+    HEIGHT, WIDTH = 1080, 1920
+    SHOW_IMAGES = False
+    SAVE_IMAGES = True
 
-avg_img /= N
-avg_img = np.around(avg_img)
+    img_list = load_images_from_folder(STRUCTURED_LIGHT_INPUT_DIR)
+    avg_img = get_average_img(img_list, (HEIGHT, WIDTH))
+    bin_img_list = make_binary_images(img_list, avg_img)
+    x_val_img = binary_images_to_projector_x_val_img(bin_img_list, (HEIGHT, WIDTH))
+
+    if SHOW_IMAGES:
+        show_image_list(bin_img_list)
+        show_image(x_val_img)
+
+    if SAVE_IMAGES:
+        save_image(x_val_img, X_VAL_IMG_DIR, X_VAL_PNG, FILETYPE_PNG)
+        save_image_list(bin_img_list, BINARY_IMG_DIR, BINARY_IMG_PNG, FILETYPE_PNG )
+        
 
 
-x_value_image = np.zeros((1080, 1920))
-print("x val image")
-print(x_value_image)
-xxx =  np.ndarray((1080, 1920))
-img_list.reverse()
-x_factor = 1
 
-for img in img_list:
-    bin_img = (img > avg_img)*1.0
-    show_image(bin_img)
-    x_value_image += bin_img * x_factor
-    x_factor *= 2
-    show_image(x_value_image)
 
-cv2.imwrite(os.path.join(output_dir, "x_val_img.png"), x_value_image)
+
+
 
