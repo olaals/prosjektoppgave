@@ -4,7 +4,9 @@ import os
 
 def load_pattern_images(pattern_dir):
     pattern_img_list = []
-    for file_name in os.listdir(pattern_dir):
+    file_name_dir_list = os.listdir(pattern_dir)
+    file_name_dir_list.sort()
+    for file_name in file_name_dir_list:
         image = bpy.data.images.load(os.path.join(pattern_dir, file_name))
         pattern_img_list.append(image)
     return pattern_img_list
