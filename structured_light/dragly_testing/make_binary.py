@@ -4,7 +4,8 @@ import os
 import numpy as np
 
 img_folder = "images"
-
+output_dir = "bin_images"
+show_images = False
 
 def load_images_from_folder(folder):
     images = []
@@ -20,8 +21,9 @@ def load_images_from_folder(folder):
 
 
 def show_image(img):
-    plt.imshow(img, cmap="gray")
-    plt.show()
+    if show_images:
+        plt.imshow(img, cmap="gray")
+        plt.show()
 
 
 print(os.listdir(img_folder))
@@ -52,6 +54,5 @@ for img in img_list:
     x_factor *= 2
     show_image(x_value_image)
 
-
-
+cv2.imwrite(os.path.join(output_dir, "x_val_img.png"), x_value_image)
 
