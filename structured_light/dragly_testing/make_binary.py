@@ -53,27 +53,34 @@ def binary_images_to_projector_x_val_img(bin_img_list, shape):
     return x_value_image
 
 def save_image(img, folder, filename, filetype):
-    cv2.imwrite(os.path.join(folder, filename) + filetype, img)
+    if folder == "":
+        cv2.imwrite(filename + filetype, img)
+    else:
+        cv2.imwrite(os.path.join(folder, filename) + filetype, img)
 
 def save_image_list(img_list, folder, filename, filetype):
     subscript = 0
     for img in img_list:
         img *= 255
-        save_path = os.path.join(folder, filename) + "_" + str(subscript) + filetype
-        print("savepathkjo")
+        save_path = os.path.join(os.getcwd(), os.path.join(folder, filename) + "_" + str(subscript) + filetype)
         print(save_path)
-        cv2.imwrite(save_path, img)
+
+        if cv2.imwrite(save_path, img):
+            print("sucessfull")
+        else:
+            print("could not save to")
+            print(save_path)
         subscript += 1
 
 
 
 if __name__ == '__main__':
 
-    STRUCTURED_LIGHT_INPUT_DIR = "struc_lighted"
-    X_VAL_IMG_DIR = "projector_x_images"
-    X_VAL_PNG = "x_val_img_very_reflected"
-    BINARY_IMG_DIR = "bin_images_refl"
-    BINARY_IMG_PNG = "binary_image_refl" 
+    STRUCTURED_LIGHT_INPUT_DIR = "structure-lighted"
+    X_VAL_IMG_DIR = ""
+    X_VAL_PNG = "x-val-img"
+    BINARY_IMG_DIR = "bin-images"
+    BINARY_IMG_PNG = "binary-image" 
     FILETYPE_PNG = ".png"
     HEIGHT, WIDTH = 1080, 1920
     SHOW_IMAGES = False

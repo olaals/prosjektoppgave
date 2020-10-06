@@ -1,6 +1,14 @@
 import bpy
 import os
+import sys
 
+def get_argument(arg):
+    args = sys.argv
+    for i in range(len(args)):
+        if args[i] == arg:
+            return args[i+1]
+    print("Could not find argument for ", arg)
+    return None
 
 def load_pattern_images(pattern_dir):
     pattern_img_list = []
@@ -32,9 +40,18 @@ def render(filename, output_dir, res_x, res_y):
 
 
 if __name__ == '__main__':
-    PATTERN_DIR = os.path.join(os.path.join(os.getcwd(), os.pardir), "patterns")
-    OUTPUT_DIR = os.path.join(os.path.join(os.getcwd(), os.pardir), "struc_lighted")
-    OUTPUT_FILENAME = "monkey_refl"
+    PATTERN_DIR = get_argument("--pattern")
+    if PATTERN_DIR is None:
+        PATTERN_DIR = os.path.join(os.getcwd(), "../../../patterns/normal-patterns-0-7/")
+    else:
+        PATTERN_DIR = os.path.join(os.getcwd(), PATTERN_DIR)
+
+    OUTPUT_DIR = get_argument("--output")
+    if OUTPUT_DIR is None:
+        OUTPUT_DIR = os.path.join(os.getcwd(), "structure-lighted")
+    else:
+        OUTPUT_DIR = os.path.join(os.getcwd(), OUTPUT_DIR)
+    OUTPUT_FILENAME = "sl_img"
     PROJECTOR_LIGHT_NAME = "Light"
     RES_X = 1920
     RES_Y = 1080
