@@ -69,11 +69,11 @@ def save_image_list(img_list, folder, filename, filetype):
 
 if __name__ == '__main__':
 
-    STRUCTURED_LIGHT_INPUT_DIR = "images"
+    STRUCTURED_LIGHT_INPUT_DIR = "struc_lighted"
     X_VAL_IMG_DIR = "projector_x_images"
-    X_VAL_PNG = "x_val_img"
-    BINARY_IMG_DIR = "bin_images"
-    BINARY_IMG_PNG = "binary_image" 
+    X_VAL_PNG = "x_val_img_very_reflected"
+    BINARY_IMG_DIR = "bin_images_refl"
+    BINARY_IMG_PNG = "binary_image_refl" 
     FILETYPE_PNG = ".png"
     HEIGHT, WIDTH = 1080, 1920
     SHOW_IMAGES = False

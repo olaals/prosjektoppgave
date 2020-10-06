@@ -49,7 +49,20 @@ def create_inverse_transformation():
     inv_transformation = assemble_trans_mat(inv_rot, inv_translation)
     return inv_transformation
 
+def unproject_camera(n_cam, inv_proj, inv_trans):
+    
+    p_cam = inv_proj@n_cam
+    p_cam = p_cam/p_cam[3] # not sure if 3 or 2
+    p_pro = inv_trans@p_cam  
+    return p_pro
 
+def unproject_projector(n_pro, inv_proj):
+    p_pro = inv_pro@n_pro
+    p_pro = p_pro/p_pro[3] # not sure if 3 or 2
+    return p_pro
+
+def find_camera_line(width, height):
+    
 
 a = create_inverse_projection()
 print(a)
