@@ -2,7 +2,23 @@ import cv2
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import sys
 
+def get_folder_argument(arg, default):
+    args = sys.argv
+    for i in range(len(args)):
+        if args[i] == arg:
+            return os.path.join(os.getcwd(), args[i+1])
+    print("Could not find argument for ", arg)
+    return os.path.join(os.getcwd(), default)
+
+def get_argument_or_default(arg, default):
+    args = sys.argv
+    for i in range(len(args)):
+        if args[i] == arg:
+            return args[i+1]
+    print("Could not find argument for ", arg)
+    return default
 
 def load_images_from_folder(folder):
     images = []
@@ -62,7 +78,7 @@ def save_image_list(img_list, folder, filename, filetype):
     subscript = 0
     for img in img_list:
         img *= 255
-        save_path = os.path.join(os.getcwd(), os.path.join(folder, filename) + "_" + str(subscript) + filetype)
+        save_path = os.path.join(folder, filename) + "_" + str(subscript) + filetype
         print(save_path)
 
         if cv2.imwrite(save_path, img):
@@ -76,10 +92,10 @@ def save_image_list(img_list, folder, filename, filetype):
 
 if __name__ == '__main__':
 
-    STRUCTURED_LIGHT_INPUT_DIR = "structure-lighted"
+    STRUCTURED_LIGHT_INPUT_DIR = get_folder_argument("--input", "structure-lighted")
     X_VAL_IMG_DIR = ""
-    X_VAL_PNG = "x-val-img"
-    BINARY_IMG_DIR = "bin-images"
+    X_VAL_PNG = get_argument_or_default("--xvalimg", "x-val-img")
+    BINARY_IMG_DIR = get_folder_argument("--bindir", "bin-images")
     BINARY_IMG_PNG = "binary-image" 
     FILETYPE_PNG = ".png"
     HEIGHT, WIDTH = 1080, 1920
