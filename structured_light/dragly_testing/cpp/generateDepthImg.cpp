@@ -68,14 +68,24 @@ Matrix4h getTransformationMatrix()
     return transMat;
 }
 
-Vector4h crossXZ(Vector4h a, Vector4h b)
+Vector4h makeAxBzCLine(Vector4h a, Vector4h b)
 {
     Vector4h result;
     result(0) = a(2) - b(2);
     result(1) = b(0) - a(0);
-    result(2) = a(0) * b(2) - b(0) * (2);
+    result(2) = a(0) * b(2) - b(0) * a(2);
     result(3) = 1.0f;
     return result;
+}
+
+Vector4h cross3(Vector4h a, Vector4h b)
+{
+    Vector4h res;
+    res(0) = a(1) * b(2) - a(2) * b(1);
+    res(1) = a(2) * b(0) - a(0) * b(2);
+    res(2) = a(0) * b(1) - a(1) * b(0);
+    res(3) = 0;
+    return res;
 }
 
 int main(int argc, char **argv)
@@ -88,15 +98,37 @@ int main(int argc, char **argv)
     const int WIDTH = input.width();
 
     Matrix4h InvK = getInvCameraMat(FOCAL_LEN, PX_DIM, WIDTH, HEIGHT);
+    Matrix4h transMat = getTransformationMatrix();
 
     Vector4h px{x, y, 1.0f, 1.0f};
 
-    Vector4h s_cam = InvK * px;
-    cout << "s_cam" << endl;
-    cout << s_cam << endl;
+    Vector4h normCam1 = InvK * px;
+    Vector4h normCam2 = 2 * normCam1;
+    normCam2(3) = 1;
 
-    //Buffer<uint8_t> result(input.width(), input.height());
-    //output.realize(result);
-    //save_image(result, "grayscale.png");
+    Vector4h pointCam1 = transMat * normCam1;
+    Vector4h pointCam2 = transMat * normCam2;
+
+    Vector4h cameraLine = makeAxBzCLine(pointCam1, pointCam2);
+
+    Vector4h pxProj{input(x, y) / 255.0f * 1920.0f, 0.0f, 1.0f, 1.0f};
+    Vector4h normProj1 = InvK * pxProj;
+    Vector4h normProj2{0.0f, 0.0f, 0.0f, 1.0f};
+
+    Vector4h projectorLine = makeAxBzCLine(normProj1, normProj2);
+    Vector4h intersection = cross3(cameraLine, projectorLine);
+    intersection = intersection / intersection(2);
+    intersection = intersection * (input(x, y) > 0);
+
+    auto depth = -intersection(1) / 3.0f * 255.0f;
+    //cout << depth << endl;
+
+    Func output;
+    output(x, y) = Halide::cast<uint8_t>(depth);
+
+    Buffer<uint8_t> result(input.width(), input.height());
+
+    output.realize(result);
+    save_image(result, "depth_img.png");
     return 0;
 }
