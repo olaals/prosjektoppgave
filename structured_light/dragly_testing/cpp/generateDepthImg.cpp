@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     intersection = intersection / intersection(2);
     intersection = intersection * (input(x, y) > 0);
 
-    auto depth = -intersection(1) / 3.0f * 255.0f;
+    auto depth = -intersection(1) / 4.0f * 255.0f;
     //cout << depth << endl;
 
     Func output;
