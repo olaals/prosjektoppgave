@@ -97,7 +97,27 @@ if __name__ == '__main__':
         print(inv_trans)
 
     depth_img = np.zeros((HEIGHT, WIDTH))
-    input("press enter")
+
+    HEIGHT = 3
+    WIDTH = 6
+
+    pixel_coords_cam = np.ones((HEIGHT*WIDTH, 3), dtype=np.int16)
+    print(np.arange(0, WIDTH, 1, dtype=np.int16))
+
+    
+    for row in range(HEIGHT):
+        pixel_coords_cam[row*WIDTH:row*WIDTH+WIDTH, 0] = np.arange(0,WIDTH, dtype=np.int16)
+        pixel_coords_cam[row*WIDTH:row*WIDTH+WIDTH, 1] = row
+    
+
+    s_cam = pixel_coords_cam@K_inv
+    print(s_cam)
+
+
+
+        #normalized_img_coords_cam[]
+    
+    input("press enter to continue")
 
 
 
