@@ -70,15 +70,25 @@ Matrix4h getInvCameraMat(float focalLen, float pxDim, int width, int height)
     Matrix4h camMat;
     float zero = 0.0;
     float one = 1.0;
-    camMat << pxDim / focalLen, zero, -pxDim * u0 / focalLen, zero,
-        zero, pxDim / focalLen, -pxDim * v0 / focalLen, zero,
-        zero, zero, one, zero,
-        zero, zero, zero, one;
+    camMat << pxDim / focalLen, 0.0f, -pxDim * u0 / focalLen, 0.0f,
+        0.0f, pxDim / focalLen, -pxDim * v0 / focalLen, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f;
 
     return camMat;
 }
 
-Matrix4h getTransformationMatrix()
+Matrix4h getTransMatProjToCam()
+{
+    Matrix4h transMat;
+    transMat << 0.9945219f, 0.0f, -0.10452846f, -0.2f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.10452846f, 0.0f, 0.9945219f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f;
+    return transMat;
+}
+
+Matrix4h getTransMatWorldToProj()
 {
     Matrix4h transMat;
     transMat << 0.9945219f, 0.0f, -0.10452846f, -0.2f,
@@ -141,6 +151,38 @@ Vector4h intersectionLinePlane(Vector4h l, Vector4h l_dash, Vector4h plPlane)
     return intersection;
 }
 
+template <typename Function>
+void writeBufferToXYZFile(Buffer<float> &buffer, string filename, string deliminator, Function condFunc)
+{
+    std::vector<Point> points;
+    for (int j = 0; j < buffer.height(); j++)
+    {
+        for (int i = 0; i < buffer.width(); i++)
+        {
+            const auto x = buffer(i, j, 0);
+            const auto y = buffer(i, j, 1);
+            const auto z = buffer(i, j, 2);
+            if (condFunc(x, y, z))
+            {
+                continue;
+            }
+            points.push_back({x, y, z});
+        }
+    }
+    std::ofstream outFile;
+    outFile.open(filename);
+    outFile << points.size() << "\n";
+    for (const auto &point : points)
+    {
+        outFile << point.x << deliminator << point.y << deliminator << point.z << "\n";
+    }
+}
+
+bool conditionProjector(float x, float y, float z)
+{
+    return (x < -10.0f || x > 10.0f || y < -10.0f || y > 10.0f || z < -10.0f || z > 10.0f);
+}
+
 int main(int argc, char **argv)
 {
     const float FOCAL_LEN = 36.1;
@@ -153,7 +195,7 @@ int main(int argc, char **argv)
     const int WIDTH = input.width();
 
     Matrix4h InvK = getInvCameraMat(FOCAL_LEN, PX_DIM, WIDTH, HEIGHT);
-    Matrix4h transMat = getTransformationMatrix();
+    Matrix4h transMatProjToCam = getTransMatProjToCam();
 
     Vector4h px{x, y, 1.0f, 1.0f};
 
@@ -161,8 +203,8 @@ int main(int argc, char **argv)
     Vector4h normCam2 = 2 * normCam1;
     normCam2(3) = 1;
 
-    Vector4h pointCam1 = transMat * normCam1;
-    Vector4h pointCam2 = transMat * normCam2;
+    Vector4h pointCam1 = transMatProjToCam * normCam1;
+    Vector4h pointCam2 = transMatProjToCam * normCam2;
 
     const auto [camLine, camLineDash] = pluckerLine(pointCam1, pointCam2);
     //Vector4h cameraLine = makeAxBzCLine(pointCam1, pointCam2);
@@ -176,64 +218,28 @@ int main(int argc, char **argv)
     Vector4h ProjPlane = pluckerPlane(projLine, projLineDash, normProj1);
     Vector4h intersection = intersectionLinePlane(camLine, camLineDash, ProjPlane);
     intersection = intersection / intersection(3);
-    intersection *= (input(x, y) > 0);
-
-    //Vector4h projectorLine = makeAxBzCLine(normProj1, normProj2);
-    //Vector4h intersection = cross3(cameraLine, projectorLine);
-    //intersection = intersection / intersection(2);
-    //intersection = intersection * (input(x, y) > 0);
-
-    //Expr depth = -intersection(1);
-    //Expr depth = -intersection(1) / 4.0f * 255.0f;
-    //cout << depth << endl;
-
-    //Func output;
-    //output(x, y) = Halide::cast<uint8_t>(depth);
-
-    //Buffer<uint8_t> result(input.width(), input.height());
-
-    //output.realize(result);
-    //save_image(result, "depth_img.png");
+    intersection *= (input(x, y) > 0); // does this make sense?
 
     Expr depth = intersection(3);
 
-    saveImage(depth, input.width(), input.height(), "depth_img.png");
+    saveImage(depth, input.width(), input.height(), "images/depth_img.png");
 
-    Func result;
-    result(x, y, c) = 0.0f;
-    result(x, y, 0) = intersection(0);
-    result(x, y, 1) = intersection(1);
-    result(x, y, 2) = intersection(2);
-
-    Buffer<float> output(input.width(), input.height(), 3);
-    result.realize(output);
-    std::vector<Point> points;
-    for (int j = 0; j < output.height(); j++)
+    if (POINT_CLOUD_PROJ_FRAME)
     {
-        for (int i = 0; i < output.width(); i++)
-        {
-            const auto x = output(i, j, 0);
-            const auto y = output(i, j, 1);
-            const auto z = output(i, j, 2);
-            if (x == 0.0 && y == 0.0 && z == 0.0)
-            {
-                continue;
-            }
-            if (x < -10.0f || x > 10.0f || y < -10.0f || y > 10.0f || z < -10.0f || z > 10.0f)
-            {
-                continue;
-            }
-            points.push_back({x, y, z});
-        }
+        Func result;
+        result(x, y, c) = 0.0f;
+        result(x, y, 0) = intersection(0);
+        result(x, y, 1) = intersection(1);
+        result(x, y, 2) = intersection(2);
+
+        Buffer<float> output(input.width(), input.height(), 3);
+        result.realize(output);
+        writeBufferToXYZFile(output, "proj.xyz", ";", conditionProjector);
     }
-    std::ofstream outFile;
-    outFile.open("out.xyz");
-    outFile << points.size() << "\n";
-    outFile << "comment"
-            << "\n";
-    for (const auto &point : points)
+    if (POINT_CLOUD_GLOBAL_FRAME)
     {
-        outFile << point.x << " " << point.y << " " << point.z << "\n";
+
+        Vector4h ptGlobalFrame =
     }
 
     return 0;
