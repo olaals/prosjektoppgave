@@ -8,6 +8,10 @@
 #include <halide_image_io.h>
 #include <iostream>
 #include <stdio.h>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using std::string;
 using std::stringstream;
@@ -29,6 +33,32 @@ struct Point
     float y;
     float z;
 };
+
+Matrix4h readTransfMatFromCSV(string csvFile)
+{
+    Matrix4h transfMat;
+    ifstream in(csvFile);
+    vector<float> floatVec;
+    if (in)
+    {
+        string line;
+        while (getline(in, line))
+        {
+            stringstream sep(line);
+            string field;
+            while (getline(sep, field, ','))
+            {
+                float val = stod(field);
+                floatVec.push_back(val);
+            }
+        }
+    }
+    transfMat << floatVec[0], floatVec[1], floatVec[2], floatVec[3],
+        floatVec[4], floatVec[5], floatVec[6], floatVec[7],
+        floatVec[8], floatVec[9], floatVec[10], floatVec[11],
+        floatVec[12], floatVec[13], floatVec[14], floatVec[15];
+    return transfMat;
+}
 
 ostream &operator<<(ostream &os, const Matrix4h &m)
 {
@@ -91,9 +121,9 @@ Matrix4h getTransMatProjToCam()
 Matrix4h getTransMatWorldToProj()
 {
     Matrix4h transMat;
-    transMat << 0.9945219f, 0.0f, -0.10452846f, -0.2f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.10452846f, 0.0f, 0.9945219f, 0.0f,
+    transMat << -0.99862951f, 0.0f, 0.0523359f, 0.1f,
+        0.00908804f, -0.1734101f, 0.9986295f, 3.0f,
+        -0.052335f, -1.0f, 0.0f, 1.0f,
         0.0f, 0.0f, 0.0f, 1.0f;
     return transMat;
 }
@@ -183,19 +213,32 @@ bool conditionProjector(float x, float y, float z)
     return (x < -10.0f || x > 10.0f || y < -10.0f || y > 10.0f || z < -10.0f || z > 10.0f);
 }
 
+bool noCondition(float x, float y, float z)
+{
+    return false;
+}
+
 int main(int argc, char **argv)
 {
     const float FOCAL_LEN = 36.1;
     const float PX_DIM = 10 * 10e-6;
     const bool POINT_CLOUD_GLOBAL_FRAME = true;
     const bool POINT_CLOUD_PROJ_FRAME = true;
+    const string PROJECTOR_X_PNG = "projector-x.png";
+    const string TRANSF_MAT_WORLD_TO_PROJ_CSV = "transl.csv";
+    const string SAVE_DEPTH_IMAGE = "images/depth_img.png";
+    const string SAVE_XYZ_PROJ = "proj.txt";
+    const string SAVE_XYZ_WORLD = "world.txt";
 
-    Halide::Buffer<uint8_t> input = load_image("projector-x.png");
+    Halide::Buffer<uint8_t> input = load_image(PROJECTOR_X_PNG);
     const int HEIGHT = input.height();
     const int WIDTH = input.width();
 
     Matrix4h InvK = getInvCameraMat(FOCAL_LEN, PX_DIM, WIDTH, HEIGHT);
     Matrix4h transMatProjToCam = getTransMatProjToCam();
+    Matrix4h transMatWorldToProj = readTransfMatFromCSV(TRANSF_MAT_WORLD_TO_PROJ_CSV);
+    cout << "Tranformation Matrix World to Projector" << endl;
+    cout << transMatWorldToProj << endl;
 
     Vector4h px{x, y, 1.0f, 1.0f};
 
@@ -222,7 +265,7 @@ int main(int argc, char **argv)
 
     Expr depth = intersection(3);
 
-    saveImage(depth, input.width(), input.height(), "images/depth_img.png");
+    saveImage(depth, input.width(), input.height(), SAVE_DEPTH_IMAGE);
 
     if (POINT_CLOUD_PROJ_FRAME)
     {
@@ -234,12 +277,21 @@ int main(int argc, char **argv)
 
         Buffer<float> output(input.width(), input.height(), 3);
         result.realize(output);
-        writeBufferToXYZFile(output, "proj.xyz", ";", conditionProjector);
+        writeBufferToXYZFile(output, SAVE_XYZ_PROJ, ";", conditionProjector);
     }
     if (POINT_CLOUD_GLOBAL_FRAME)
     {
 
-        Vector4h ptGlobalFrame =
+        Vector4h ptGlobalFrame = transMatWorldToProj * intersection;
+        Func result_w;
+        result_w(x, y, c) = 0.0f;
+        result_w(x, y, 0) = ptGlobalFrame(0);
+        result_w(x, y, 1) = ptGlobalFrame(1);
+        result_w(x, y, 2) = ptGlobalFrame(2);
+
+        Buffer<float> output_w(input.width(), input.height(), 3);
+        result_w.realize(output_w);
+        writeBufferToXYZFile(output_w, SAVE_XYZ_WORLD, ";", conditionProjector);
     }
 
     return 0;
