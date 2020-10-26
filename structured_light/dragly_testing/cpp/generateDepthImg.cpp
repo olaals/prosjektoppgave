@@ -225,7 +225,7 @@ int main(int argc, char **argv)
     const bool POINT_CLOUD_GLOBAL_FRAME = true;
     const bool POINT_CLOUD_PROJ_FRAME = true;
     const string PROJECTOR_X_PNG = "projector-x.png";
-    const string TRANSF_MAT_WORLD_TO_PROJ_CSV = "transl.csv";
+    const string TRANSF_MAT_WORLD_TO_PROJ_CSV = "transf-mat-world-to-proj.csv";
     const string SAVE_DEPTH_IMAGE = "images/depth_img.png";
     const string SAVE_XYZ_PROJ = "proj.txt";
     const string SAVE_XYZ_WORLD = "world.txt";
