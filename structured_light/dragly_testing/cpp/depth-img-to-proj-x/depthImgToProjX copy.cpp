@@ -133,7 +133,6 @@ void saveImage(Expr result, size_t width, size_t height, const string &basename)
 
 void saveImageEXR(Expr result, int width, int height, const char fileName[])
 {
-    result = cast<float>(result);
     Target target = get_host_target();
     Func byteResult;
     byteResult(x, y) = result;
@@ -159,9 +158,6 @@ void saveImageEXR(Expr result, int width, int height, const char fileName[])
 
 void debugImageEXR(Expr channel1Expr, Expr channel2Expr, Expr channel3Expr, int width, int height, const char fileName[])
 {
-    channel1Expr = cast<float>(channel1Expr);
-    channel2Expr = cast<float>(channel2Expr);
-    channel3Expr = cast<float>(channel3Expr);
     Target target = get_host_target();
     Func byteResult;
     byteResult(x, y, c) = 0.0f;
@@ -191,8 +187,8 @@ void debugImageEXR(Expr channel1Expr, Expr channel2Expr, Expr channel3Expr, int 
 int main(int argc, char **argv)
 {
     const string INPUTFILE = "depth-image-gt.exr";
-    const double FOCAL_LEN = 36.1;
-    const double PX_DIM = 10 * 10e-5;
+    const float FOCAL_LEN = 36.1;
+    const float PX_DIM = 10 * 10e-5;
 
     Array2D<Rgba> pixels;
     int width, height;
@@ -212,13 +208,7 @@ int main(int argc, char **argv)
     cout << transfMatProjToCam << endl;
 
     Expr zDepthCam = input(x, y);
-    zDepthCam = cast<double>(zDepthCam);
     Vector4h pxCam{x, y, 1.0f, 0.0f};
-    debugImageEXR(pxCam(0), pxCam(1), pxCam(2), width, height, "pxCam.exr");
-    pxCam(0) = cast<double>(pxCam(0));
-    pxCam(1) = cast<double>(pxCam(1));
-    pxCam(2) = cast<double>(pxCam(2));
-    pxCam(3) = cast<double>(pxCam(3));
     Vector4h normCam = camMatInv * pxCam;
     debugImageEXR(normCam(0), normCam(1), normCam(2), width, height, "normCam.exr");
     Vector4h ptCam = normCam / normCam(2) * zDepthCam;
@@ -227,11 +217,10 @@ int main(int argc, char **argv)
     Vector4h ptProj = transfMatProjToCam * ptCam;
     debugImageEXR(ptProj(0), ptProj(1), ptProj(2), width, height, "ptProj.exr");
     Vector4h normProj = ptProj / ptProj(2);
-    debugImageEXR(normProj(0), normProj(1), normProj(3), width, height, "normProj.exr");
     ptProj(3) = 0.0f;
     Vector4h pxProj = camMat * normProj;
     //normProj = normProj / normProj(2);
-    debugImageEXR(pxProj(0), pxProj(1), pxProj(2), width, height, "pxProj.exr");
+    debugImageEXR(pxProj(0), pxProj(1), pxProj(2), width, height, "normProj.exr");
     Expr xPxProj = pxProj(0);
     //saveImage(xValProj, width, height, "x-val-proj-gt");
     saveImageEXR(xPxProj, width, height, "x-val-proj-gt.exr");

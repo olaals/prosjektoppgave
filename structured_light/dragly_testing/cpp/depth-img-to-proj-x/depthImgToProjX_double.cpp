@@ -50,32 +50,32 @@ ostream &operator<<(ostream &os, const Vector4h &v)
     return os;
 }
 
-Matrix4h getCameraMatrix(float focalLen, float pxDim, int width, int height)
+Matrix4h getCameraMatrix(double focalLen, double pxDim, int width, int height)
 {
 
     focalLen = focalLen * 10e-3;
-    float u0 = width / 2.0;
-    float v0 = height / 2.0;
+    double u0 = width / 2.0;
+    double v0 = height / 2.0;
     Matrix4h camMat;
-    float diagEntry = focalLen / pxDim;
-    camMat << diagEntry, 0.0f, u0, 0.0f,
-        0.0f, diagEntry, v0, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f;
+    double diagEntry = focalLen / pxDim;
+    camMat << diagEntry, 0.0d, u0, 0.0d,
+        0.0d, diagEntry, v0, 0.0d,
+        0.0d, 0.0d, 1.0d, 0.0d,
+        0.0d, 0.0d, 0.0d, 1.0d;
 
     return camMat;
 }
 
-Matrix4h getInvCameraMat(float focalLen, float pxDim, int width, int height)
+Matrix4h getInvCameraMat(double focalLen, double pxDim, int width, int height)
 {
     focalLen = focalLen * 10e-3;
-    float u0 = width / 2.0;
-    float v0 = height / 2.0;
+    double u0 = width / 2.0;
+    double v0 = height / 2.0;
     Matrix4h camMat;
-    camMat << pxDim / focalLen, 0.0f, -pxDim * u0 / focalLen, 0.0f,
-        0.0f, pxDim / focalLen, -pxDim * v0 / focalLen, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f;
+    camMat << pxDim / focalLen, 0.0d, -pxDim * u0 / focalLen, 0.0d,
+        0.0d, pxDim / focalLen, -pxDim * v0 / focalLen, 0.0d,
+        0.0d, 0.0d, 1.0d, 0.0d,
+        0.0d, 0.0d, 0.0d, 1.0d;
 
     return camMat;
 }
@@ -83,10 +83,11 @@ Matrix4h getInvCameraMat(float focalLen, float pxDim, int width, int height)
 Matrix4h getTransMatProjToCam()
 {
     Matrix4h transMat;
-    transMat << 0.9945219f, 0.0f, -0.10452846f, -0.2f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.10452846f, 0.0f, 0.9945219f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f;
+    Expr f64 = cast<double>(0.1d);
+    transMat << cast<double>(0.9945219), 0.0d, -0.10452846d, -0.2d,
+        0.0d, 1.0d, 0.0d, 0.0d,
+        0.10452846d, 0.0d, 0.9945219d, 0.0d,
+        0.0d, 0.0d, 0.0d, 1.0d;
     return transMat;
 }
 
@@ -106,7 +107,7 @@ tuple<int, int> readOpenEXR(const char filename[], Array2D<Rgba> &pixels)
     return dim;
 }
 
-void exrArrayToHalideBuffer(Array2D<Rgba> &pixels, Buffer<float> &halideBuffer, int width, int height)
+void exrArrayToHalideBuffer(Array2D<Rgba> &pixels, Buffer<double> &halideBuffer, int width, int height)
 {
     for (int row{0}; row < height; row++)
     {
@@ -133,11 +134,10 @@ void saveImage(Expr result, size_t width, size_t height, const string &basename)
 
 void saveImageEXR(Expr result, int width, int height, const char fileName[])
 {
-    result = cast<float>(result);
     Target target = get_host_target();
     Func byteResult;
     byteResult(x, y) = result;
-    Buffer<float> output(width, height);
+    Buffer<double> output(width, height);
     byteResult.compile_jit(target);
     byteResult.realize(output);
 
@@ -159,16 +159,13 @@ void saveImageEXR(Expr result, int width, int height, const char fileName[])
 
 void debugImageEXR(Expr channel1Expr, Expr channel2Expr, Expr channel3Expr, int width, int height, const char fileName[])
 {
-    channel1Expr = cast<float>(channel1Expr);
-    channel2Expr = cast<float>(channel2Expr);
-    channel3Expr = cast<float>(channel3Expr);
     Target target = get_host_target();
     Func byteResult;
     byteResult(x, y, c) = 0.0f;
     byteResult(x, y, 0) = channel1Expr;
     byteResult(x, y, 1) = channel2Expr;
     byteResult(x, y, 2) = channel3Expr;
-    Buffer<float> output(width, height, 3);
+    Buffer<double> output(width, height, 3);
     byteResult.compile_jit(target);
     byteResult.realize(output);
 
@@ -197,7 +194,7 @@ int main(int argc, char **argv)
     Array2D<Rgba> pixels;
     int width, height;
     tie(width, height) = readOpenEXR(INPUTFILE.c_str(), pixels);
-    Buffer<float> input(width, height);
+    Buffer<double> input(width, height);
     exrArrayToHalideBuffer(pixels, input, width, height);
     cout << "Width: " << width << "  Height: " << height << endl;
     Matrix4h camMat = getCameraMatrix(FOCAL_LEN, PX_DIM, width, height);
@@ -212,13 +209,7 @@ int main(int argc, char **argv)
     cout << transfMatProjToCam << endl;
 
     Expr zDepthCam = input(x, y);
-    zDepthCam = cast<double>(zDepthCam);
     Vector4h pxCam{x, y, 1.0f, 0.0f};
-    debugImageEXR(pxCam(0), pxCam(1), pxCam(2), width, height, "pxCam.exr");
-    pxCam(0) = cast<double>(pxCam(0));
-    pxCam(1) = cast<double>(pxCam(1));
-    pxCam(2) = cast<double>(pxCam(2));
-    pxCam(3) = cast<double>(pxCam(3));
     Vector4h normCam = camMatInv * pxCam;
     debugImageEXR(normCam(0), normCam(1), normCam(2), width, height, "normCam.exr");
     Vector4h ptCam = normCam / normCam(2) * zDepthCam;
@@ -227,11 +218,10 @@ int main(int argc, char **argv)
     Vector4h ptProj = transfMatProjToCam * ptCam;
     debugImageEXR(ptProj(0), ptProj(1), ptProj(2), width, height, "ptProj.exr");
     Vector4h normProj = ptProj / ptProj(2);
-    debugImageEXR(normProj(0), normProj(1), normProj(3), width, height, "normProj.exr");
     ptProj(3) = 0.0f;
     Vector4h pxProj = camMat * normProj;
     //normProj = normProj / normProj(2);
-    debugImageEXR(pxProj(0), pxProj(1), pxProj(2), width, height, "pxProj.exr");
+    debugImageEXR(pxProj(0), pxProj(1), pxProj(2), width, height, "normProj.exr");
     Expr xPxProj = pxProj(0);
     //saveImage(xValProj, width, height, "x-val-proj-gt");
     saveImageEXR(xPxProj, width, height, "x-val-proj-gt.exr");
