@@ -243,20 +243,25 @@ int main(int argc, char **argv)
     cout << "Tranformation Matrix World to Projector" << endl;
     cout << transMatWorldToProj << endl;
 
-    Vector4h px{x, y, 1.0f, 1.0f};
+    Vector4h px{x, y, 1.0f, 0.0f};
 
     Vector4h normCam1 = InvK * px;
+    normCam1(3) = 1.0f;
     Vector4h normCam2 = 2 * normCam1;
-    normCam2(3) = 1;
+    normCam2(3) = 1.0f;
 
     Vector4h pointCam1 = transMatProjToCam * normCam1;
+    pointCam1 = pointCam1 / pointCam1(3);
     Vector4h pointCam2 = transMatProjToCam * normCam2;
+    pointCam2 /= pointCam2(3);
 
     const auto [camLine, camLineDash] = pluckerLine(pointCam1, pointCam2);
     //Vector4h cameraLine = makeAxBzCLine(pointCam1, pointCam2);
 
-    Vector4h pxProj{input(x, y) / 255.0f * 1920.0f, 0.0f, 1.0f, 1.0f};
+    Vector4h pxProj{input(x, y) / 255.0f * 1920.0f, 0.0f, 1.0f, 0.0f};
     Vector4h normProj1 = InvK * pxProj;
+    normProj1 = normProj1/normProj1(2);
+    normProj1(3) = 1.0f;
     Vector4h normProj2{0.0f, 0.0f, 0.0f, 1.0f};
     Vector4h normProj3{0.0f, 1.0f, 0.0f, 1.0f};
 

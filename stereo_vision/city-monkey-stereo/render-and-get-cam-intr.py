@@ -29,7 +29,7 @@ def getEssential(quat_world_leftcam, quat_world_rightcam, transl_world_leftcam, 
     t_C2_C1_W = transl_world_leftcam - transl_world_rightcam
     t_C2_C1_C2 = R_C2_W @t_C2_C1_W
     essential_matrix = R_C2_C1@VecToso3(t_C2_C1_C2)
-    return essential_matrix
+    return essential_matrix, R_C2_C1, t_C2_C1_C2
 
 def render(filename, output_dir, res_x, res_y):
     bpy.context.scene.render.engine = 'CYCLES'
@@ -69,7 +69,7 @@ loc_world_rightcam, rot_world_rightcam_quat, _ = transf_world_rightcam.decompose
 rot_leftcam_rightcam_quat = rot_world_leftcam_quat.rotation_difference(rot_world_rightcam_quat)
 rot_leftcam_rightcam = rot_leftcam_rightcam_quat.to_matrix()
 
-E = getEssential(rot_world_leftcam_quat, rot_world_rightcam_quat, loc_world_leftcam, loc_world_rightcam)
+E, R_C2_C1, t_C2_C1_C2 = getEssential(rot_world_leftcam_quat, rot_world_rightcam_quat, loc_world_leftcam, loc_world_rightcam)
 
 print("Camera matrix")
 print(K)
@@ -81,6 +81,8 @@ print(E)
 writeCSV("camera-matrix.csv", K)
 writeCSV("inv-camera-matrix.csv", K_inv)
 writeCSV("essential-matrix.csv", E)
+writeCSV("R-C2-C1.csv", R_C2_C1)
+writeCSV("t-C2-C1-C2.csv", t_C2_C1_C2)
 
 scene = bpy.context.scene
 scene.camera = bpy.data.objects["LeftCamera"]
