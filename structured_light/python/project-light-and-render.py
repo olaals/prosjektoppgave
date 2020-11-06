@@ -40,6 +40,14 @@ def render(filename, output_dir, res_x, res_y):
     bpy.context.scene.render.resolution_x = res_x
     bpy.context.scene.render.resolution_y = res_y
     bpy.ops.render.render(write_still=True)
+    
+def turn_off_projector(proj_spot_name):
+    spot = bpy.data.lights[proj_spot_name]
+    spot.energy = 0
+
+def turn_on_projector(proj_spot_name, power):
+    spot = bpy.data.lights[proj_spot_name]
+    spot.energy = power
 
 
 if __name__ == '__main__':
@@ -55,16 +63,23 @@ if __name__ == '__main__':
     else:
         OUTPUT_DIR = os.path.join(os.getcwd(), OUTPUT_DIR)
     OUTPUT_FILENAME = "sl_img"
+    OUTPUT_NOPROJ_FILENAME = "no-projector"
+    OUTPUT_NOPROJ_DIR = "images"
     PROJECTOR_LIGHT_NAME = "Spot"
     RES_X = 1920
     RES_Y = 1080
+    PROJECTOR_POWER = 20000
     print(PATTERN_DIR)
     
     proj_obj = bpy.data.objects["Projector"]
 
     
     print(proj_obj.proj_settings.projected_texture)
-    
+
+
+    turn_off_projector(PROJECTOR_LIGHT_NAME)
+    render(OUTPUT_NOPROJ_FILENAME, OUTPUT_NOPROJ_DIR, RES_X, RES_Y)
+    turn_on_projector(PROJECTOR_LIGHT_NAME, PROJECTOR_POWER)
 
     
     pattern_img_list = load_pattern_images(PATTERN_DIR)
@@ -80,4 +95,4 @@ if __name__ == '__main__':
         change_pattern_projector(PROJECTOR_LIGHT_NAME, proj_obj, pattern_img)
         render(OUTPUT_FILENAME + "_" + str(ind), OUTPUT_DIR, RES_X, RES_Y)
         ind += 1
-
+    

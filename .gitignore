@@ -2,6 +2,11 @@
 *.exr
 *world.txt
 *proj.txt
+blender_models
+*.zip
+*.jpeg
+*.txt
+*.mtl
 
 
 # Byte-compiled / optimized / DLL files

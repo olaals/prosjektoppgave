@@ -1,0 +1,1 @@
+../../../python/get-depth-exr.py

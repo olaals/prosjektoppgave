@@ -32,6 +32,9 @@ struct Point
     float x;
     float y;
     float z;
+    uint16_t r;
+    uint16_t g;
+    uint16_t b;
 };
 
 Matrix4h read4x4MatFromCSV(string csvFile)
@@ -182,7 +185,7 @@ Vector4h intersectionLinePlane(Vector4h l, Vector4h l_dash, Vector4h plPlane)
 }
 
 template <typename Function>
-void writeBufferToXYZFile(Buffer<float> &buffer, string filename, string deliminator, Function condFunc)
+void writeBufferToXYZFile(Buffer<float> &buffer, Buffer<uint8_t> &color, string filename, string deliminator, Function condFunc)
 {
     std::vector<Point> points;
     for (int j = 0; j < buffer.height(); j++)
@@ -192,19 +195,23 @@ void writeBufferToXYZFile(Buffer<float> &buffer, string filename, string delimin
             const auto x = buffer(i, j, 0);
             const auto y = buffer(i, j, 1);
             const auto z = buffer(i, j, 2);
+            uint8_t r = color(i, j, 0);
+            uint8_t g = color(i, j, 1);
+            uint8_t b = color(i, j, 2);
             if (condFunc(x, y, z))
             {
                 continue;
             }
-            points.push_back({x, y, z});
+            points.push_back({x, y, z, r, g, b});
         }
     }
     std::ofstream outFile;
     outFile.open(filename);
     outFile << points.size() << "\n";
+    const auto d = deliminator;
     for (const auto &point : points)
     {
-        outFile << point.x << deliminator << point.y << deliminator << point.z << "\n";
+        outFile << point.x << d << point.y << d << point.z << d << point.r << d << point.g << d << point.b << "\n";
     }
 }
 
@@ -231,6 +238,7 @@ int main(int argc, char **argv)
     const string SAVE_DEPTH_IMAGE = "images/depth_img.png";
     const string SAVE_XYZ_PROJ = "pointclouds/proj.txt";
     const string SAVE_XYZ_WORLD = "pointclouds/world.txt";
+    const string NO_PROJECTOR_PNG = "images/no-projector.png";
 
     Halide::Buffer<uint8_t> input = load_image(PROJECTOR_X_PNG);
     const int HEIGHT = input.height();
@@ -260,7 +268,7 @@ int main(int argc, char **argv)
 
     Vector4h pxProj{input(x, y) / 255.0f * 1920.0f, 0.0f, 1.0f, 0.0f};
     Vector4h normProj1 = InvK * pxProj;
-    normProj1 = normProj1/normProj1(2);
+    normProj1 = normProj1 / normProj1(2);
     normProj1(3) = 1.0f;
     Vector4h normProj2{0.0f, 0.0f, 0.0f, 1.0f};
     Vector4h normProj3{0.0f, 1.0f, 0.0f, 1.0f};
@@ -275,6 +283,8 @@ int main(int argc, char **argv)
 
     saveImage(depth, input.width(), input.height(), SAVE_DEPTH_IMAGE);
 
+    Halide::Buffer<uint8_t> color = load_image(NO_PROJECTOR_PNG);
+
     if (POINT_CLOUD_PROJ_FRAME)
     {
         Func result;
@@ -285,7 +295,7 @@ int main(int argc, char **argv)
 
         Buffer<float> output(input.width(), input.height(), 3);
         result.realize(output);
-        writeBufferToXYZFile(output, SAVE_XYZ_PROJ, ";", conditionProjector);
+        writeBufferToXYZFile(output, color, SAVE_XYZ_PROJ, ";", conditionProjector);
     }
     if (POINT_CLOUD_GLOBAL_FRAME)
     {
@@ -299,7 +309,7 @@ int main(int argc, char **argv)
 
         Buffer<float> output_w(input.width(), input.height(), 3);
         result_w.realize(output_w);
-        writeBufferToXYZFile(output_w, SAVE_XYZ_WORLD, ";", conditionProjector);
+        writeBufferToXYZFile(output_w, color, SAVE_XYZ_WORLD, ";", conditionProjector);
     }
 
     return 0;
