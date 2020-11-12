@@ -61,9 +61,9 @@ def create_inverse_pattern_img(patterns, rows):
 if __name__ == '__main__':
     ROWS = 1024
     COLS = 1920
-    PATTERNS = 7
+    PATTERNS = 8
     SAVE_FOLDER = os.path.join(
-        os.getcwd(), get_argument_or_default("--output", "../patterns/patterns-7"))
+        os.getcwd(), get_argument_or_default("--output", "../patterns/patterns-8"))
     PATTERN_FILE_NAME = "pattern"
     EXTENSION = ".png"
 

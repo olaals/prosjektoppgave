@@ -1,1 +1,0 @@
-../../../generate-projector-x.py

@@ -9,8 +9,10 @@ sx = 10e-6;
 imageSize = [1920, 1080];
 principalPoint = [1920/2, 1080/2];
 
-intrinsics = cameraIntrinsics([focalLen/sx, focalLen/sx], principalPoint, imageSize);
+%intrinsics = cameraIntrinsics([focalLen/sx, focalLen/sx], principalPoint, imageSize);
+intrinsics = cameraIntrinsics([2006.4342, 1866.0011], principalPoint, imageSize);
 IntrinsicMatrix = intrinsics.IntrinsicMatrix
+
 
 cameraParms = cameraParameters('IntrinsicMatrix', IntrinsicMatrix, 'ImageSize', [1080, 1920])
 
@@ -42,7 +44,7 @@ imgLeftRectGray = rgb2gray(imgLeftRect);
 imgRightRectGray = rgb2gray(imgRightRect);
 %imshow(imgLeftRectGray)
 
-disparityRange = [256-64, 256+64];
+disparityRange = [128-64, 256-64];
 disparityMap = disparitySGM(imgLeftRectGray, imgRightRectGray, 'DisparityRange', disparityRange);
 %imshow(disparityMap, [0, 64]);
 %title('Disparity Map');

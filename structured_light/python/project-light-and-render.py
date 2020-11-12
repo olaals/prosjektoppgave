@@ -53,7 +53,7 @@ def turn_on_projector(proj_spot_name, power):
 if __name__ == '__main__':
     PATTERN_DIR = get_argument("--pattern")
     if PATTERN_DIR is None:
-        PATTERN_DIR = os.path.join(os.getcwd(), "../../../patterns/patterns-7/")
+        PATTERN_DIR = os.path.join(os.getcwd(), "../../../patterns/patterns-8/")
     else:
         PATTERN_DIR = os.path.join(os.getcwd(), PATTERN_DIR)
 

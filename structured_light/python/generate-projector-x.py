@@ -62,7 +62,7 @@ def make_binary_images(img_list, avg_img, offset_light_dark):
 def binary_images_to_projector_x_val_img(bin_img_list, shape):
     x_value_image = np.zeros(shape)
     bin_img_list.reverse()
-    x_factor = 2
+    x_factor = 1
     for bin_img in bin_img_list:
         x_value_image += bin_img * x_factor
         x_factor *= 2
