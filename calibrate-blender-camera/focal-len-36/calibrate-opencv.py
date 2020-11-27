@@ -40,6 +40,14 @@ newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 print(newcameramtx)
 print(np.linalg.inv(newcameramtx))
 inv_cam_mat = np.linalg.inv(newcameramtx)
+inv_cam_mat_4x4 = np.eye(4)
+inv_cam_mat_4x4[0:3,0:3] = inv_cam_mat
+print(inv_cam_mat_4x4)
+cam_mat_4x4 = np.eye(4)
+cam_mat_4x4[0:3,0:3] = newcameramtx
+
 
 np.savetxt("camera-matrix.csv", newcameramtx, delimiter=",")
 np.savetxt("inv-camera-matrix.csv", inv_cam_mat, delimiter=",")
+np.savetxt("camera-matrix-4x4.csv", cam_mat_4x4, delimiter=",")
+np.savetxt("inv-camera-matrix-4x4.csv", inv_cam_mat_4x4, delimiter=",")
